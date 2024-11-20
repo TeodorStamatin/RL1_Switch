@@ -1,0 +1,31 @@
+1 2
+
+SWITCH IMPLEMENTATION
+
+Firstly we should talk about the routing process, which consists of selecting the best route for a 
+packet to travel from the source to the destination. In this project, this is done by the switches. 
+The switches have a MAC table that stores the MAC addresses of the interfaces connected to them. 
+The function switch_setup reads the configuration file of the switches and stores the priority of 
+the switch and data about the interfaces on the switch: number, vlan and state (if the STP protocol 
+would be implemented) and returns these informations as a vector of tuples called 'vlans'. Every 
+time a packet is received, the switch will store the MAC address of the source and then look for 
+the destination MAC in the MAC table. If the destination MAC is found,the switch will send the 
+packet to the interface corresponding to the destination MAC. Otherwise, the switch will send the 
+packet to all the interfaces except the one that sent the packet, flooding the network until the 
+packet reaches the destination.
+
+If '(dest_mac_bytes[0] & 0x01) != 0' then the packet is a broadcast packet and it will be sent to 
+all the interfaces except the one that sent the packet.
+
+The interfaces might have a vlan tag. If the vlan tag is not present in the packet, it means that 
+the packet came from a host, and the switch will check the vlan of the interface from the 'vlans' 
+vector. If there are any hosts that have the same tag and the switch can send them the packet 
+dirrectly, the switch will send the packet to them. Otherwise, we add the vlan tag to the packet 
+by inserting the vlan id in the packet between the source MAC and the ethertype. If the vlan tag is 
+present in the packet, it means that the packet comes from another switch and we check if the 
+current switch has any interfaces with the same vlan tag. If it has, the switch will send the packet 
+to those interfaces after removing the vlan tag. Otherwise, it will send the packet to the trunk 
+ports, which are other switches. At every step, we check that the vlan tag of the destination is 
+the same as the source or if the interface is a trunk and that the interface that we want to send 
+the packet to is not the source interface. The 'BLOCKED' state is used for the STP protocol, which 
+is not implemented in this project.
